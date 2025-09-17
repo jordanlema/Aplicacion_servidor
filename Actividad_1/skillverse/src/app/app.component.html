@@ -1,0 +1,40 @@
+<div class="catalogo-container">
+  <h1>{{ title }}</h1>
+  <p>Explora nuestros cursos en diferentes áreas:</p>
+
+  <div class="cursos-grid">
+    <div class="curso-card" *ngFor="let curso of cursos">
+      <h2>{{ curso.titulo }}</h2>
+      <p>{{ curso.descripcion }}</p>
+      <p>logros: {{ curso.logros }}</p>
+      <p>certificado: {{ curso.certificado }}</p>
+      <div class="acciones">
+        <button class="btn-primary">Inscribirse</button>
+        <button class="btn-outline" (click)="curso.titulo === 'Inglés Básico' && abrirDetalles(curso)">Ver detalles</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de Detalles del Curso -->
+  <div class="modal-backdrop" *ngIf="cursoSeleccionado">
+    <!-- Modal de Detalles del Curso -->
+<div class="modal-backdrop" *ngIf="cursoSeleccionado">
+  <div class="modal">
+    <h2>{{ cursoSeleccionado.titulo }}</h2>
+    <p><strong>Duración:</strong> {{ cursoSeleccionado.duracion }}</p>
+    <p><strong>Descripción:</strong> {{ cursoSeleccionado.descripcion }}</p>
+    <p><strong>Logros:</strong> {{ cursoSeleccionado.logros }}</p>
+    <p><strong>Certificado:</strong> 
+      {{ cursoSeleccionado.certificado === 'active' ? 'Disponible' : 'No disponible' }}
+    </p>
+
+    <h3>Temas del curso</h3>
+    <ul>
+      <li *ngFor="let tema of cursoSeleccionado.temas">{{ tema }}</li>
+    </ul>
+
+    <button class="btn-close" (click)="cerrarDetalles()">Cerrar</button>
+  </div>
+</div>
+  </div>
+</div>
