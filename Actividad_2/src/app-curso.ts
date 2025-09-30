@@ -14,7 +14,7 @@ const actualizarCurso: ICurso = {
     id: 1,
     titulo: "Curso de Inglés Intermedio",
     descripcion: "Nivel intermedio",
-    profesor: { id: '1', nombre: "Juan", email: "profe@mail.com", rol: "profesor" },
+    profesor: { id: '1', nombre: "Jose", email: "josemanuel@gmail.com", rol: "profesor" },
     actividades: [],
     estudiantesInscritos: []
 };

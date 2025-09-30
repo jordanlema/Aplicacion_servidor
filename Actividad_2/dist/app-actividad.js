@@ -15,7 +15,7 @@ const actualizarActividad = {
     titulo: "Actividad 1 Actualizada",
     descripcion: "Descripción actualizada",
     cursoId: 1,
-    profesor: { id: '1', nombre: "Juan", email: "jordanle@email.com", rol: "profesor" }
+    profesor: { id: '1', nombre: "Jose", email: "josemanuel@gmail.com", rol: "profesor" }
 };
 function manejar_error(error) {
     if (error) {
