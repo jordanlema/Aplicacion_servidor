@@ -1,0 +1,95 @@
+classDiagram
+
+class Profesor {
+  id : function Number() { [native code] }
+  experiencia : function String() { [native code] }
+  estado : function String() { [native code] }
+  usuario : function Number() { [native code] }
+}
+
+class Usuario {
+  id : function Number() { [native code] }
+  nombre : function String() { [native code] }
+  email : function String() { [native code] }
+  password : function String() { [native code] }
+  rol : function String() { [native code] }
+}
+
+class EntregaActividad {
+  id : function Number() { [native code] }
+  actividadId : function Number() { [native code] }
+  estudianteId : function Number() { [native code] }
+  archivoURL : function String() { [native code] }
+  fechaEnvio : date
+}
+
+class Actividad {
+  id : function Number() { [native code] }
+  cursoId : function Number() { [native code] }
+  titulo : function String() { [native code] }
+  descripcion : function String() { [native code] }
+}
+
+class Pregunta {
+  id : function Number() { [native code] }
+  enunciado : function String() { [native code] }
+  respuestaCorrecta : function String() { [native code] }
+}
+
+class EvaluacionPregunta {
+  id : function Number() { [native code] }
+  evaluacionId : function Number() { [native code] }
+  preguntaId : function Number() { [native code] }
+}
+
+class ResultadoEvaluacion {
+  id : function Number() { [native code] }
+  evaluacionId : function Number() { [native code] }
+  estudianteId : function Number() { [native code] }
+  puntajeObtenido : float
+}
+
+class Evaluacion {
+  id : function Number() { [native code] }
+  cursoId : function Number() { [native code] }
+  puntajeRequerido : float
+}
+
+class InscripcionCurso {
+  id : function Number() { [native code] }
+  cursoId : function Number() { [native code] }
+  estudianteId : function Number() { [native code] }
+}
+
+class Certificado {
+  id : function Number() { [native code] }
+  cursoId : function Number() { [native code] }
+  estudianteId : function Number() { [native code] }
+  fechaEmision : date
+  codigoVerificacion : function String() { [native code] }
+}
+
+class Curso {
+  id : function Number() { [native code] }
+  titulo : function String() { [native code] }
+  descripcion : function String() { [native code] }
+  profesorId : function Number() { [native code] }
+}
+
+Profesor "1" -- "1" Usuario
+Usuario "1" -- "1" Profesor
+EntregaActividad "*" -- "1" Actividad
+Actividad "*" -- "1" Curso
+Actividad "1" -- "*" EntregaActividad
+EvaluacionPregunta "*" -- "1" Evaluacion
+EvaluacionPregunta "*" -- "1" Pregunta
+ResultadoEvaluacion "*" -- "1" Evaluacion
+Evaluacion "*" -- "1" Curso
+Evaluacion "1" -- "*" EvaluacionPregunta
+Evaluacion "1" -- "*" ResultadoEvaluacion
+InscripcionCurso "*" -- "1" Curso
+Certificado "*" -- "1" Curso
+Curso "1" -- "*" Actividad
+Curso "1" -- "*" Evaluacion
+Curso "1" -- "*" InscripcionCurso
+Curso "1" -- "*" Certificado

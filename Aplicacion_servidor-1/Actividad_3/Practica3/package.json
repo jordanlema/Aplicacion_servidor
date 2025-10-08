@@ -1,0 +1,17 @@
+{
+  "scripts": {
+    "generate-erd": "ts-node scripts/generate-erd.ts",
+    "seed": "ts-node src/main.ts"
+  },
+  "dependencies": {
+    "reflect-metadata": "^0.2.2",
+    "sqlite3": "^5.1.7",
+    "typeorm": "^0.3.27"
+  },
+  "devDependencies": {
+    "@types/node": "^24.7.0",
+    "ts-node": "^10.9.2",
+    "typeorm-erd": "^0.0.4",
+    "typescript": "^5.9.3"
+  }
+}
