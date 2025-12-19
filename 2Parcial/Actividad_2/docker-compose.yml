@@ -1,0 +1,79 @@
+services:
+  rabbitmq:
+    image: rabbitmq:3.11-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+
+  postgres_curso:
+    image: postgres:17
+    environment:
+      POSTGRES_USER: pguser
+      POSTGRES_PASSWORD: pgpass
+      POSTGRES_DB: curso_db
+    ports:
+      - "5434:5432"
+
+  postgres_inscripcion:
+    image: postgres:17
+    environment:
+      POSTGRES_USER: pguser
+      POSTGRES_PASSWORD: pgpass
+      POSTGRES_DB: inscripcion_db
+    ports:
+      - "5433:5432"
+
+  redis:
+    image: redis:7
+    ports:
+      - "6379:6379"
+
+  ms-curso:
+    build: ./ms-curso
+    ports:
+      - "3001:3001"
+    depends_on:
+      - postgres_curso
+      - rabbitmq
+      - redis
+    environment:
+      - DATABASE_HOST=postgres_curso
+      - DATABASE_PORT=5432
+      - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - WEBHOOK_SECRET=dev-secret-key-change-in-production
+      - EDGE_FUNCTION_EVENT_LOGGER_URL=https://rjfxkvcnbzgclnplwgdk.supabase.co/functions/v1/event-logger
+      - EDGE_FUNCTION_NOTIFIER_URL=https://rjfxkvcnbzgclnplwgdk.supabase.co/functions/v1/notifier
+      - SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJqZnhrdmNuYnpnY2xucGx3Z2RrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU5MjM4MzMsImV4cCI6MjA4MTQ5OTgzM30.2vPVmsraJ_3zvyoHyjNyivVz1kWLH49GV_BCiNESPok
+
+  ms-inscripcion:
+    build: ./ms-inscripcion
+    ports:
+      - "3002:3002"
+    depends_on:
+      - postgres_inscripcion
+      - rabbitmq
+      - redis
+      - ms-curso
+    environment:
+      - DATABASE_HOST=postgres_inscripcion
+      - DATABASE_PORT=5432
+      - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - WEBHOOK_SECRET=dev-secret-key-change-in-production
+      - EDGE_FUNCTION_EVENT_LOGGER_URL=https://rjfxkvcnbzgclnplwgdk.supabase.co/functions/v1/event-logger
+      - EDGE_FUNCTION_NOTIFIER_URL=https://rjfxkvcnbzgclnplwgdk.supabase.co/functions/v1/notifier
+      - SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJqZnhrdmNuYnpnY2xucGx3Z2RrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU5MjM4MzMsImV4cCI6MjA4MTQ5OTgzM30.2vPVmsraJ_3zvyoHyjNyivVz1kWLH49GV_BCiNESPok
+
+  ms-gateway:
+    build: ./ms-gateway
+    ports:
+      - "3000:3000"
+    depends_on:
+      - ms-curso
+      - ms-inscripcion
+      - rabbitmq
+    environment:
+      - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672
