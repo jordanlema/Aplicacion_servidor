@@ -1,0 +1,51 @@
+# ============================================
+# 🚀 TALLER 3 - MCP + IA
+# Gestión de Inscripciones a Cursos
+# ============================================
+
+# 📦 Dependencias de Node.js
+node_modules/
+dist/
+build/
+
+# 🔐 Variables de entorno
+.env
+.env.local
+.env.*.local
+
+# 📝 Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# 💾 Bases de datos locales
+*.db
+*.sqlite
+*.sqlite3
+
+# 🐳 Docker
+.dockerignore
+
+# 🔧 IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# 📊 Coverage
+coverage/
+.nyc_output/
+
+# 🔨 Build
+*.tsbuildinfo
+
+# 🎯 Sistema operativo
+.DS_Store
+Thumbs.db
+
+# 📦 Package managers
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
