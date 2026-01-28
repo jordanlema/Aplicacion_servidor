@@ -1,0 +1,288 @@
+{
+  "name": "02 - Sincronización con Google Sheets",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "eventos",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-eventos",
+      "name": "Webhook - Recibir Eventos",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 300],
+      "webhookId": "eventos-sheets"
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "fecha",
+              "value": "={{ new Date($json.timestamp).toLocaleString('es-ES') }}"
+            },
+            {
+              "name": "tipo_evento",
+              "value": "={{ $json.tipo }}"
+            },
+            {
+              "name": "curso",
+              "value": "={{ $json.datos.curso_nombre }}"
+            },
+            {
+              "name": "estudiante",
+              "value": "={{ $json.datos.estudiante_nombre || 'N/A' }}"
+            },
+            {
+              "name": "estado",
+              "value": "={{ $json.tipo === 'inscripcion.creada' ? 'Activa' : $json.tipo === 'inscripcion.cancelada' ? 'Cancelada' : 'Procesando' }}"
+            },
+            {
+              "name": "curso_id",
+              "value": "={{ $json.datos.curso_id }}"
+            },
+            {
+              "name": "inscripcion_id",
+              "value": "={{ $json.datos.inscripcion_id || 'N/A' }}"
+            },
+            {
+              "name": "email",
+              "value": "={{ $json.datos.estudiante_email || 'N/A' }}"
+            },
+            {
+              "name": "criticidad",
+              "value": "={{ $json.criticidad || 'normal' }}"
+            },
+            {
+              "name": "origen",
+              "value": "={{ $json.metadata.origen }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "set-transformar-sheets",
+      "name": "Set - Transformar para Sheets",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "={{ $env.GOOGLE_SHEETS_ID }}",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Eventos",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Fecha": "={{ $json.fecha }}",
+            "Tipo de Evento": "={{ $json.tipo_evento }}",
+            "Curso": "={{ $json.curso }}",
+            "Estudiante": "={{ $json.estudiante }}",
+            "Estado": "={{ $json.estado }}",
+            "Curso ID": "={{ $json.curso_id }}",
+            "Inscripción ID": "={{ $json.inscripcion_id }}",
+            "Email": "={{ $json.email }}",
+            "Criticidad": "={{ $json.criticidad }}",
+            "Origen": "={{ $json.origen }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Fecha",
+              "displayName": "Fecha",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Tipo de Evento",
+              "displayName": "Tipo de Evento",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Curso",
+              "displayName": "Curso",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Estudiante",
+              "displayName": "Estudiante",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Estado",
+              "displayName": "Estado",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Curso ID",
+              "displayName": "Curso ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Inscripción ID",
+              "displayName": "Inscripción ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Criticidad",
+              "displayName": "Criticidad",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Origen",
+              "displayName": "Origen",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "google-sheets-append",
+      "name": "Google Sheets - Registrar Evento",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [650, 300],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "1",
+          "name": "Google Sheets OAuth2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { \"success\": true, \"message\": \"Evento registrado en Google Sheets\", \"tipo_evento\": $('Set - Transformar para Sheets').item.json.tipo_evento, \"timestamp\": new Date().toISOString() } }}",
+        "options": {
+          "responseCode": 200,
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          }
+        }
+      },
+      "id": "respond-sheets-success",
+      "name": "Respond to Webhook - Registrado",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [850, 300]
+    }
+  ],
+  "connections": {
+    "Webhook - Recibir Eventos": {
+      "main": [
+        [
+          {
+            "node": "Set - Transformar para Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set - Transformar para Sheets": {
+      "main": [
+        [
+          {
+            "node": "Google Sheets - Registrar Evento",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Sheets - Registrar Evento": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook - Registrado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "1",
+  "id": "workflow-sincronizacion-sheets",
+  "meta": {
+    "instanceId": "n8n-taller-4"
+  },
+  "tags": [
+    {
+      "id": "4",
+      "name": "sheets"
+    },
+    {
+      "id": "5",
+      "name": "sincronizacion"
+    },
+    {
+      "id": "6",
+      "name": "registro"
+    }
+  ]
+}

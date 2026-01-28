@@ -1,0 +1,79 @@
+# ============================================
+# DOCKER-COMPOSE.YML
+# ============================================
+# Infraestructura para exam2p-audit-service
+# Incluye: RabbitMQ, n8n y el microservicio
+
+version: '3.8'
+
+services:
+  # ============================================
+  # RabbitMQ - Message Broker
+  # ============================================
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: exam2p-rabbitmq
+    ports:
+      - "5672:5672"   # Puerto AMQP
+      - "15672:15672" # Puerto de Management UI
+    environment:
+      - RABBITMQ_DEFAULT_USER=guest
+      - RABBITMQ_DEFAULT_PASS=guest
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "check_running"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - exam2p-network
+
+  # ============================================
+  # n8n - Workflow Automation
+  # ============================================
+  n8n:
+    image: n8nio/n8n
+    container_name: exam2p-n8n
+    ports:
+      - "5678:5678"
+    environment:
+      - N8N_BASIC_AUTH_ACTIVE=false
+      - N8N_HOST=localhost
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=http
+      - WEBHOOK_URL=http://localhost:5678/
+      - GENERIC_TIMEZONE=America/Lima
+    volumes:
+      - n8n_data:/home/node/.n8n
+    networks:
+      - exam2p-network
+
+  # ============================================
+  # exam2p-audit-service
+  # ============================================
+  audit-service:
+    build: .
+    container_name: exam2p-audit-service
+    ports:
+      - "3000:3000"
+    environment:
+      - PORT=3000
+      - RABBITMQ_URL=amqp://rabbitmq:5672
+      - N8N_WEBHOOK_URL=http://n8n:5678/webhook/exam2p-audit-deletion
+      - DATABASE_PATH=./src/db/database.sqlite
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    volumes:
+      - ./src/db:/app/src/db
+    networks:
+      - exam2p-network
+
+networks:
+  exam2p-network:
+    driver: bridge
+
+volumes:
+  rabbitmq_data:
+  n8n_data:

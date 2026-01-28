@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "exam2p-mcp-tool": {
+      "command": "node",
+      "args": ["c:\\Users\\Lenovo\\Desktop\\EXAMEN_S\\exam2p-mcp-tool\\src\\index.js"],
+      "env": {
+        "AUDIT_SERVICE_URL": "http://localhost:3000"
+      }
+    }
+  }
+}

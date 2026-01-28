@@ -1,0 +1,370 @@
+{
+  "name": "03 - Alertas de Condiciones Críticas",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "alertas",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-alertas",
+      "name": "Webhook - Recibir Eventos",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 400],
+      "webhookId": "alertas-criticas"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.tipo }}",
+              "operation": "equals",
+              "value2": "curso.cupos_agotados"
+            }
+          ],
+          "boolean": [
+            {
+              "value1": "={{ $json.metadata.requiere_accion }}",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "id": "if-es-critico",
+      "name": "IF - ¿Es Crítico?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [450, 400]
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "modelId": {
+          "__rl": true,
+          "value": "gemini-1.5-flash",
+          "mode": "list"
+        },
+        "prompt": "=Analiza la siguiente situación crítica:\n\nTipo de evento: {{ $json.tipo }}\nCurso: {{ $json.datos.curso_nombre }}\nCupos máximos: {{ $json.datos.cupos_maximos }}\nInscritos actuales: {{ $json.datos.inscritos_actuales }}\n\nEvalúa la urgencia de esta situación y responde únicamente con una palabra: ALTA, MEDIA o BAJA.\n\nCriterios:\n- ALTA: Requiere acción inmediata (cupos completamente agotados)\n- MEDIA: Requiere atención pronta (más del 80% ocupado)\n- BAJA: Para monitoreo (menos del 80% ocupado)\n\nRespuesta (una palabra):",
+        "options": {
+          "temperature": 0.3,
+          "maxOutputTokens": 10
+        }
+      },
+      "id": "gemini-analizar-urgencia",
+      "name": "Gemini - Analizar Urgencia",
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [650, 300]
+    },
+    {
+      "parameters": {
+        "mode": "expression",
+        "output": "={{ $json.message.trim().toUpperCase() }}",
+        "rules": {
+          "rules": [
+            {
+              "outputKey": "ALTA",
+              "conditions": {
+                "string": [
+                  {
+                    "value1": "={{ $json.message.trim().toUpperCase() }}",
+                    "operation": "contains",
+                    "value2": "ALTA"
+                  }
+                ]
+              }
+            },
+            {
+              "outputKey": "MEDIA",
+              "conditions": {
+                "string": [
+                  {
+                    "value1": "={{ $json.message.trim().toUpperCase() }}",
+                    "operation": "contains",
+                    "value2": "MEDIA"
+                  }
+                ]
+              }
+            },
+            {
+              "outputKey": "BAJA",
+              "conditions": {
+                "string": [
+                  {
+                    "value1": "={{ $json.message.trim().toUpperCase() }}",
+                    "operation": "contains",
+                    "value2": "BAJA"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "switch-nivel-urgencia",
+      "name": "Switch - Nivel de Urgencia",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 2,
+      "position": [850, 300]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $env.TELEGRAM_CHAT_ID }}",
+        "text": "=🚨 *ALERTA CRÍTICA - PRIORIDAD ALTA* 🚨\n\n*Curso:* {{ $('Webhook - Recibir Eventos').item.json.datos.curso_nombre }}\n*Situación:* Cupos completamente agotados\n\n📊 *Detalles:*\n• Cupos máximos: {{ $('Webhook - Recibir Eventos').item.json.datos.cupos_maximos }}\n• Inscritos actuales: {{ $('Webhook - Recibir Eventos').item.json.datos.inscritos_actuales }}\n• Ocupación: 100%\n\n⚠️ *Acción requerida:*\nRevisar lista de espera o considerar abrir nuevo grupo.\n\n🕐 {{ new Date().toLocaleString('es-ES') }}",
+        "additionalFields": {
+          "parseMode": "Markdown"
+        }
+      },
+      "id": "telegram-alerta-alta",
+      "name": "Telegram - Alerta ALTA",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1,
+      "position": [1050, 200],
+      "credentials": {
+        "telegramApi": {
+          "id": "1",
+          "name": "Telegram API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fromEmail": "={{ $env.EMAIL_FROM }}",
+        "toEmail": "={{ $env.EMAIL_ADMIN }}",
+        "subject": "=⚠️ Alerta Media: {{ $('Webhook - Recibir Eventos').item.json.datos.curso_nombre }}",
+        "emailType": "html",
+        "message": "=<html>\n<body style=\"font-family: Arial, sans-serif;\">\n  <h2 style=\"color: #ff9800;\">⚠️ Alerta de Nivel MEDIO</h2>\n  \n  <p><strong>Curso:</strong> {{ $('Webhook - Recibir Eventos').item.json.datos.curso_nombre }}</p>\n  \n  <h3>Detalles de Ocupación:</h3>\n  <ul>\n    <li><strong>Cupos máximos:</strong> {{ $('Webhook - Recibir Eventos').item.json.datos.cupos_maximos }}</li>\n    <li><strong>Inscritos actuales:</strong> {{ $('Webhook - Recibir Eventos').item.json.datos.inscritos_actuales }}</li>\n    <li><strong>Ocupación:</strong> {{ Math.round(($('Webhook - Recibir Eventos').item.json.datos.inscritos_actuales / $('Webhook - Recibir Eventos').item.json.datos.cupos_maximos) * 100) }}%</li>\n  </ul>\n  \n  <p style=\"background-color: #fff3e0; padding: 10px; border-left: 4px solid #ff9800;\">\n    <strong>Recomendación:</strong> Monitorear inscripciones próximas. El curso está cerca de completarse.\n  </p>\n  \n  <p style=\"color: #666; font-size: 12px;\">Generado automáticamente el {{ new Date().toLocaleString('es-ES') }}</p>\n</body>\n</html>",
+        "options": {}
+      },
+      "id": "email-alerta-media",
+      "name": "Email - Alerta MEDIA",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2,
+      "position": [1050, 350],
+      "credentials": {
+        "smtp": {
+          "id": "1",
+          "name": "SMTP Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "write",
+        "dataPropertyName": "log_entry",
+        "options": {
+          "fileName": "alertas-bajas.log",
+          "append": true
+        }
+      },
+      "id": "file-log-baja",
+      "name": "File - Log Alerta BAJA",
+      "type": "n8n-nodes-base.writeBinaryFile",
+      "typeVersion": 1,
+      "position": [1050, 500]
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "log_entry",
+              "value": "={{ `[${new Date().toISOString()}] BAJA - Curso: ${$('Webhook - Recibir Eventos').item.json.datos.curso_nombre} - Ocupación: ${Math.round(($('Webhook - Recibir Eventos').item.json.datos.inscritos_actuales / $('Webhook - Recibir Eventos').item.json.datos.cupos_maximos) * 100)}%\\n` }}"
+            }
+          ]
+        }
+      },
+      "id": "set-log-baja",
+      "name": "Set - Preparar Log",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [850, 500]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { \"success\": true, \"nivel_urgencia\": \"alta\", \"accion\": \"telegram\", \"timestamp\": new Date().toISOString() } }}",
+        "options": {}
+      },
+      "id": "respond-alta",
+      "name": "Respond - Alta",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1250, 200]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { \"success\": true, \"nivel_urgencia\": \"media\", \"accion\": \"email\", \"timestamp\": new Date().toISOString() } }}",
+        "options": {}
+      },
+      "id": "respond-media",
+      "name": "Respond - Media",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1250, 350]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { \"success\": true, \"nivel_urgencia\": \"baja\", \"accion\": \"log\", \"timestamp\": new Date().toISOString() } }}",
+        "options": {}
+      },
+      "id": "respond-baja",
+      "name": "Respond - Baja",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1250, 500]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { \"success\": false, \"message\": \"Evento no crítico\", \"timestamp\": new Date().toISOString() } }}",
+        "options": {}
+      },
+      "id": "respond-no-critico",
+      "name": "Respond - No Crítico",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [650, 500]
+    }
+  ],
+  "connections": {
+    "Webhook - Recibir Eventos": {
+      "main": [
+        [
+          {
+            "node": "IF - ¿Es Crítico?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF - ¿Es Crítico?": {
+      "main": [
+        [
+          {
+            "node": "Gemini - Analizar Urgencia",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond - No Crítico",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini - Analizar Urgencia": {
+      "main": [
+        [
+          {
+            "node": "Switch - Nivel de Urgencia",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch - Nivel de Urgencia": {
+      "main": [
+        [
+          {
+            "node": "Telegram - Alerta ALTA",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Email - Alerta MEDIA",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Set - Preparar Log",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Telegram - Alerta ALTA": {
+      "main": [
+        [
+          {
+            "node": "Respond - Alta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email - Alerta MEDIA": {
+      "main": [
+        [
+          {
+            "node": "Respond - Media",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set - Preparar Log": {
+      "main": [
+        [
+          {
+            "node": "File - Log Alerta BAJA",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "File - Log Alerta BAJA": {
+      "main": [
+        [
+          {
+            "node": "Respond - Baja",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "1",
+  "id": "workflow-alertas-criticas",
+  "meta": {
+    "instanceId": "n8n-taller-4"
+  },
+  "tags": [
+    {
+      "id": "7",
+      "name": "alertas"
+    },
+    {
+      "id": "8",
+      "name": "critico"
+    },
+    {
+      "id": "9",
+      "name": "ia"
+    }
+  ]
+}

@@ -1,0 +1,45 @@
+# Archivos de entorno
+.env
+.env.local
+.env.*.local
+
+# Credenciales y secrets
+credentials.json
+token.json
+*.pem
+*.key
+
+# Logs
+*.log
+logs/
+n8n-logs/
+
+# Backups
+backup-*
+*.tar.gz
+*.sql
+
+# Docker volumes (si se copian localmente)
+n8n_data/
+postgres_data/
+
+# Archivos temporales
+tmp/
+temp/
+*.tmp
+
+# Sistema operativo
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Datos de prueba sensibles
+test-data-real.json
+production-*.json

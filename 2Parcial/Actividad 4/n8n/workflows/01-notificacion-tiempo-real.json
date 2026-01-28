@@ -1,0 +1,172 @@
+{
+  "name": "01 - Notificación en Tiempo Real",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "inscripcion.creada",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-inscripcion",
+      "name": "Webhook - Inscripción Creada",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [250, 300],
+      "webhookId": "inscripcion-creada"
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "estudiante",
+              "value": "={{ $json.body.estudianteNombre }}"
+            },
+            {
+              "name": "curso",
+              "value": "={{ $json.body.cursoNombre }}"
+            },
+            {
+              "name": "fecha",
+              "value": "={{ $json.body.fecha }}"
+            },
+            {
+              "name": "evento",
+              "value": "inscripcion_exitosa"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "set-transformar",
+      "name": "Set - Transformar Datos",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.3,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "resource": "text",
+        "operation": "message",
+        "modelId": "gemini-1.5-flash",
+        "prompt": "=Genera un mensaje de notificación corto y amigable para confirmar que {{ $json.estudiante }} se ha inscrito exitosamente en el curso {{ $json.curso }}. El mensaje debe ser entusiasta y motivador, en máximo 2 líneas.",
+        "options": {}
+      },
+      "id": "gemini-generar-mensaje",
+      "name": "Gemini - Generar Mensaje",
+      "type": "n8n-nodes-base.google",
+      "typeVersion": 1,
+      "position": [650, 300],
+      "credentials": {
+        "googleApi": {
+          "id": "2",
+          "name": "Gemini API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $env.TELEGRAM_CHAT_ID }}",
+        "text": "=🎓 *NUEVA INSCRIPCIÓN*\n\n📚 *Curso:* {{ $('Set - Transformar Datos').item.json.curso }}\n👤 *Estudiante:* {{ $('Set - Transformar Datos').item.json.estudiante }}\n📅 *Fecha:* {{ $('Set - Transformar Datos').item.json.fecha }}\n\n✅ *Estado:* Confirmada",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      },
+      "id": "telegram-notificar",
+      "name": "Telegram - Enviar Notificación",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [850, 300],
+      "credentials": {
+        "telegramApi": {
+          "id": "1",
+          "name": "Telegram API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { \"success\": true, \"message\": \"Notificación enviada correctamente\", \"timestamp\": new Date().toISOString() } }}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "id": "respond-success",
+      "name": "Respond to Webhook - Success",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1050, 300]
+    }
+  ],
+  "connections": {
+    "Webhook - Inscripción Creada": {
+      "main": [
+        [
+          {
+            "node": "Set - Transformar Datos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set - Transformar Datos": {
+      "main": [
+        [
+          {
+            "node": "Gemini - Generar Mensaje",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini - Generar Mensaje": {
+      "main": [
+        [
+          {
+            "node": "Telegram - Enviar Notificación",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Telegram - Enviar Notificación": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook - Success",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "1",
+  "id": "workflow-notificacion-tiempo-real",
+  "meta": {
+    "instanceId": "n8n-taller-4"
+  },
+  "tags": [
+    {
+      "id": "1",
+      "name": "inscripcion"
+    },
+    {
+      "id": "2",
+      "name": "notificacion"
+    },
+    {
+      "id": "3",
+      "name": "tiempo-real"
+    }
+  ]
+}

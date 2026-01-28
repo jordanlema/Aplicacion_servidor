@@ -1,0 +1,15 @@
+{
+  "name": "exam2p-mcp-tool",
+  "version": "1.0.0",
+  "description": "MCP Tool exam2p_query_audit para consultar registros de auditoría",
+  "main": "src/index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node --watch src/index.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "axios": "^1.6.2"
+  }
+}
